@@ -1,26 +1,28 @@
 import cv2
+import base64
 import numpy as np
 from fer import FER
 from flask import Flask, request, jsonify
 
 app = Flask(__name__)
+
 detector = FER()
 
 @app.route("/emotion", methods=["POST"])
 def emotion():
-    # نتأكد إن فيه ملف صورة اسمه "image" في الطلب
-    if "image" not in request.files:
-        return jsonify({"error": "no image file with key 'image'"}), 400
+    data = request.json
 
-    file = request.files["image"]
-    img_bytes = np.frombuffer(file.read(), np.uint8)
-    img = cv2.imdecode(img_bytes, cv2.IMREAD_COLOR)
+    if "image" not in data:
+        return jsonify({"error": "Image not provided"}), 400
 
-    if img is None:
-        return jsonify({"error": "could not decode image"}), 400
+    try:
+        img_data = base64.b64decode(data["image"])
+        np_arr = np.frombuffer(img_data, np.uint8)
+        frame = cv2.imdecode(np_arr, cv2.IMREAD_COLOR)
+    except:
+        return jsonify({"error": "Invalid image"}), 400
 
-    # تحليل المشاعر
-    result = detector.detect_emotions(img)
+    result = detector.detect_emotions(frame)
 
     if not result:
         return jsonify({"emotion": "neutral"})
@@ -30,10 +32,6 @@ def emotion():
 
     return jsonify({"emotion": top_emotion})
 
-@app.route("/", methods=["GET"])
-def index():
-    return "EmoPlay emotion server is running!"
 
 if __name__ == "__main__":
-    # للتجربة محليًا فقط
     app.run(host="0.0.0.0", port=5000)
