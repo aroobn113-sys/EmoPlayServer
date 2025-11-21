@@ -1,5 +1,5 @@
-flask
-fer
-opencv-python-headless
-numpy
-gunicorn
+Flask==2.0.1
+opencv-python-headless==4.5.3.56
+fer==0.1.0
+tensorflow==2.5.0
+numpy==1.26.4
